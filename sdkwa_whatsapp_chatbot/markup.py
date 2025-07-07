@@ -1,5 +1,7 @@
 """Markup module for creating inline keyboards and reply markups."""
 
+from __future__ import annotations
+
 from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, field
 
@@ -48,12 +50,12 @@ class InlineKeyboard:
     """Represents an inline keyboard."""
     keyboard: List[List[InlineKeyboardButton]] = field(default_factory=list)
     
-    def add_row(self, *buttons: InlineKeyboardButton) -> 'InlineKeyboard':
+    def add_row(self, *buttons: InlineKeyboardButton) -> InlineKeyboard:
         """Add a row of buttons."""
         self.keyboard.append(list(buttons))
         return self
     
-    def add_button(self, text: str, callback_data: Optional[str] = None, url: Optional[str] = None) -> 'InlineKeyboard':
+    def add_button(self, text: str, callback_data: Optional[str] = None, url: Optional[str] = None) -> InlineKeyboard:
         """Add a button to the last row (or create new row if empty)."""
         button = InlineKeyboardButton(text=text, callback_data=callback_data, url=url)
         
@@ -81,12 +83,12 @@ class ReplyKeyboard:
     resize_keyboard: bool = True
     selective: bool = False
     
-    def add_row(self, *buttons: KeyboardButton) -> 'ReplyKeyboard':
+    def add_row(self, *buttons: KeyboardButton) -> ReplyKeyboard:
         """Add a row of buttons."""
         self.keyboard.append(list(buttons))
         return self
     
-    def add_button(self, text: str, request_contact: bool = False, request_location: bool = False) -> 'ReplyKeyboard':
+    def add_button(self, text: str, request_contact: bool = False, request_location: bool = False) -> ReplyKeyboard:
         """Add a button to the last row (or create new row if empty)."""
         button = KeyboardButton(text=text, request_contact=request_contact, request_location=request_location)
         

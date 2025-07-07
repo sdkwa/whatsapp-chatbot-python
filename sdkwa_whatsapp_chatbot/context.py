@@ -1,8 +1,14 @@
 """Context module for WhatsApp bot interactions."""
 
-from typing import Any, Dict, Optional, Union, List
+from __future__ import annotations
+
+from typing import Any, Dict, Optional, Union, List, TYPE_CHECKING
 from dataclasses import dataclass, field
 import re
+
+if TYPE_CHECKING:
+    from .whatsapp_bot import WhatsAppBot
+    from .scenes.base import BaseScene
 
 
 @dataclass
@@ -33,14 +39,14 @@ class CallbackQuery:
 class Context:
     """Context object for WhatsApp bot interactions."""
     
-    def __init__(self, bot: 'WhatsAppBot', update: Dict[str, Any], api_client: Any):
+    def __init__(self, bot: WhatsAppBot, update: Dict[str, Any], api_client: Any):
         """Initialize context with bot, update data, and API client."""
         self.bot = bot
         self.update = update
         self.api_client = api_client
         self.state: Dict[str, Any] = {}
         self.session: Dict[str, Any] = {}
-        self.scene: Optional['BaseScene'] = None
+        self.scene: Optional[BaseScene] = None
         self.match: Optional[re.Match] = None
         
         # Parse update data

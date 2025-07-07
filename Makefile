@@ -17,7 +17,7 @@ install: ## Install package
 	pip install -e .
 
 install-dev: ## Install package with development dependencies
-	pip install -e .[dev]
+	pip install -e .[dev,webhook]
 
 test: ## Run tests
 	pytest

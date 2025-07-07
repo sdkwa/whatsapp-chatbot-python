@@ -1,5 +1,7 @@
 """Composer module for building middleware and handlers."""
 
+from __future__ import annotations
+
 import re
 import asyncio
 from typing import Any, Callable, List, Optional, Pattern, Union, Dict
@@ -20,7 +22,7 @@ class Composer:
         """Initialize composer with handlers."""
         self.handler = self.compose(*handlers) if handlers else None
     
-    def use(self, *middlewares: Union[Handler, Middleware]) -> 'Composer':
+    def use(self, *middlewares: Union[Handler, Middleware]) -> Composer:
         """Add middleware to the composer."""
         if self.handler:
             self.handler = self.compose(self.handler, *middlewares)
@@ -28,35 +30,37 @@ class Composer:
             self.handler = self.compose(*middlewares)
         return self
     
-    def on(self, update_types: Union[str, List[str]], *handlers: Handler) -> 'Composer':
+    def on(self, update_types: Union[str, List[str]], *handlers: Handler) -> Composer:
         """Listen for specific update types."""
         return self.use(self.mount(update_types, *handlers))
     
-    def hears(self, triggers: Union[str, Pattern, List[Union[str, Pattern]]], *handlers: Handler) -> 'Composer':
+    def hears(self, triggers: Union[str, Pattern, List[Union[str, Pattern]]], *handlers: Handler) -> Composer:
         """Listen for text messages matching patterns."""
         return self.use(self.hears_middleware(triggers, *handlers))
     
-    def command(self, commands: Union[str, List[str]], *handlers: Handler) -> 'Composer':
+    def command(self, commands: Union[str, List[str]], *handlers: Handler) -> Composer:
         """Listen for specific commands."""
         return self.use(self.command_middleware(commands, *handlers))
     
-    def action(self, triggers: Union[str, List[str]], *handlers: Handler) -> 'Composer':
+    def action(self, triggers: Union[str, List[str]], *handlers: Handler) -> Composer:
         """Listen for callback query actions."""
         return self.use(self.action_middleware(triggers, *handlers))
     
-    def start(self, *handlers: Handler) -> 'Composer':
+    def start(self, *handlers: Handler) -> Composer:
         """Listen for /start command."""
         return self.command('start', *handlers)
     
-    def help(self, *handlers: Handler) -> 'Composer':
+    def help(self, *handlers: Handler) -> Composer:
         """Listen for /help command."""
         return self.command('help', *handlers)
     
-    def filter(self, predicate: FilterPredicate) -> 'Composer':
+    def filter(self, predicate: FilterPredicate) -> Composer:
         """Filter updates based on predicate."""
         return self.use(self.filter_middleware(predicate))
     
-    def drop(self, predicate: FilterPredicate) -> 'Composer':
+    def drop(self, predicate: FilterPredicate) -> Composer:
+        """Drop updates based on predicate."""
+        return self.use(self.drop_middleware(predicate))
         """Drop updates based on predicate."""
         return self.filter(lambda ctx: not predicate(ctx))
     

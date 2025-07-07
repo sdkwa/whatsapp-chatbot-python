@@ -1,5 +1,7 @@
 """Stage implementation for managing scenes."""
 
+from __future__ import annotations
+
 from typing import Any, Dict, List, Optional, Callable, Union
 import asyncio
 from .base import BaseScene
@@ -14,12 +16,12 @@ class Stage:
         self.scenes: Dict[str, BaseScene] = {scene.scene_id: scene for scene in scenes}
         self.default_scene = default_scene
     
-    def register(self, scene: BaseScene) -> 'Stage':
+    def register(self, scene: BaseScene) -> Stage:
         """Register a new scene."""
         self.scenes[scene.scene_id] = scene
         return self
     
-    def unregister(self, scene_id: str) -> 'Stage':
+    def unregister(self, scene_id: str) -> Stage:
         """Unregister a scene."""
         self.scenes.pop(scene_id, None)
         return self

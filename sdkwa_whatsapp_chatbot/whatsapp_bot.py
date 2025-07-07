@@ -1,5 +1,7 @@
 """Main WhatsApp Bot implementation."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from typing import Any, Dict, Optional, Union, Callable, List
@@ -76,7 +78,7 @@ class WhatsAppBot(Composer):
         
         logger.info(f"WhatsApp Bot initialized for instance: {config['idInstance']}")
     
-    def catch(self, handler: Callable[[Exception, Context], Any]) -> 'WhatsAppBot':
+    def catch(self, handler: Callable[[Exception, Context], Any]) -> WhatsAppBot:
         """Set error handler."""
         self.error_handler = handler
         return self

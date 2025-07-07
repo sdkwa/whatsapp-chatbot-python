@@ -1,5 +1,7 @@
 """Base scene implementation for conversation flows."""
 
+from __future__ import annotations
+
 from typing import Any, Dict, Optional, Callable, List, Union
 import asyncio
 from ..composer import Composer
@@ -17,17 +19,17 @@ class BaseScene(Composer):
         self.leave_handlers: List[Callable] = []
         self._ttl: Optional[int] = None
         
-    def enter(self, *handlers: Callable) -> 'BaseScene':
+    def enter(self, *handlers: Callable) -> BaseScene:
         """Register enter handlers."""
         self.enter_handlers.extend(handlers)
         return self
     
-    def leave(self, *handlers: Callable) -> 'BaseScene':
+    def leave(self, *handlers: Callable) -> BaseScene:
         """Register leave handlers."""
         self.leave_handlers.extend(handlers)
         return self
     
-    def ttl(self, seconds: int) -> 'BaseScene':
+    def ttl(self, seconds: int) -> BaseScene:
         """Set time-to-live for the scene."""
         self._ttl = seconds
         return self

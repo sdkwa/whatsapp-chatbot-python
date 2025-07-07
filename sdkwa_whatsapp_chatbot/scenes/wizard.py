@@ -1,5 +1,7 @@
 """Wizard scene implementation for step-by-step conversations."""
 
+from __future__ import annotations
+
 from typing import Any, Dict, List, Optional, Callable, Union
 import asyncio
 from .base import BaseScene
@@ -15,12 +17,12 @@ class WizardScene(BaseScene):
         self.steps: List[Callable] = []
         self.current_step = 0
     
-    def step(self, handler: Callable) -> 'WizardScene':
+    def step(self, handler: Callable) -> WizardScene:
         """Add a step to the wizard."""
         self.steps.append(handler)
         return self
     
-    def add_step(self, handler: Callable) -> 'WizardScene':
+    def add_step(self, handler: Callable) -> WizardScene:
         """Add a step to the wizard (alias for step)."""
         return self.step(handler)
     
