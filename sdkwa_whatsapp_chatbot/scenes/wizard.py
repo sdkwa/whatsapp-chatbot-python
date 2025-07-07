@@ -18,10 +18,18 @@ class WizardScene(BaseScene):
         self.steps: List[Callable] = []
         self.current_step = 0
 
-    def step(self, handler: Callable) -> WizardScene:
+    def step(self, handler: Callable = None):
         """Add a step to the wizard."""
-        self.steps.append(handler)
-        return self
+        if handler is not None:
+            self.steps.append(handler)
+            return self
+        else:
+
+            def decorator(handler: Callable):
+                self.steps.append(handler)
+                return handler
+
+            return decorator
 
     def add_step(self, handler: Callable) -> WizardScene:
         """Add a step to the wizard (alias for step)."""

@@ -33,48 +33,67 @@ def main():
 
     # Change to project root
     project_root = Path(__file__).parent.parent
-    
+
     if command == "format":
         print("🎨 Formatting code...")
         success = True
         success &= run_command([sys.executable, "-m", "black", "."], "Black formatting")
         success &= run_command([sys.executable, "-m", "isort", "."], "Import sorting")
-        
+
         if success:
             print("✨ All formatting completed successfully!")
         else:
             print("💥 Some formatting failed!")
             sys.exit(1)
-    
+
     elif command == "check":
         print("🔍 Checking code quality...")
         success = True
-        success &= run_command([sys.executable, "-m", "black", "--check", "."], "Black check")
-        success &= run_command([sys.executable, "-m", "isort", "--check-only", "."], "Import sort check")
-        success &= run_command([sys.executable, "-m", "flake8", "sdkwa_whatsapp_chatbot", "tests", "examples"], "Flake8 linting")
-        
+        success &= run_command(
+            [sys.executable, "-m", "black", "--check", "."], "Black check"
+        )
+        success &= run_command(
+            [sys.executable, "-m", "isort", "--check-only", "."], "Import sort check"
+        )
+        success &= run_command(
+            [
+                sys.executable,
+                "-m",
+                "flake8",
+                "sdkwa_whatsapp_chatbot",
+                "tests",
+                "examples",
+            ],
+            "Flake8 linting",
+        )
+
         if success:
             print("✅ All checks passed!")
         else:
             print("❌ Some checks failed!")
             sys.exit(1)
-    
+
     elif command == "lint":
         print("🔧 Running linting...")
         success = True
-        success &= run_command([sys.executable, "-m", "flake8", "sdkwa_whatsapp_chatbot"], "Flake8 linting")
-        
+        success &= run_command(
+            [sys.executable, "-m", "flake8", "sdkwa_whatsapp_chatbot"], "Flake8 linting"
+        )
+
         try:
-            success &= run_command([sys.executable, "-m", "mypy", "sdkwa_whatsapp_chatbot"], "MyPy type checking")
+            success &= run_command(
+                [sys.executable, "-m", "mypy", "sdkwa_whatsapp_chatbot"],
+                "MyPy type checking",
+            )
         except Exception:
             print("⚠️ MyPy not available, skipping type checking")
-        
+
         if success:
             print("✅ All linting passed!")
         else:
             print("❌ Some linting failed!")
             sys.exit(1)
-    
+
     elif command == "test":
         print("🧪 Running tests...")
         try:
@@ -86,7 +105,7 @@ def main():
                 sys.exit(1)
         except Exception:
             print("⚠️ Pytest not available, skipping tests")
-    
+
     else:
         print("Usage: python scripts/dev.py [format|check|lint|test]")
         print("  format: Format code with black and isort")

@@ -20,15 +20,31 @@ class BaseScene(Composer):
         self.leave_handlers: List[Callable] = []
         self._ttl: Optional[int] = None
 
-    def enter(self, *handlers: Callable) -> BaseScene:
+    def enter(self, *handlers: Callable):
         """Register enter handlers."""
-        self.enter_handlers.extend(handlers)
-        return self
+        if handlers:
+            self.enter_handlers.extend(handlers)
+            return self
+        else:
 
-    def leave(self, *handlers: Callable) -> BaseScene:
+            def decorator(handler: Callable):
+                self.enter_handlers.append(handler)
+                return handler
+
+            return decorator
+
+    def leave(self, *handlers: Callable):
         """Register leave handlers."""
-        self.leave_handlers.extend(handlers)
-        return self
+        if handlers:
+            self.leave_handlers.extend(handlers)
+            return self
+        else:
+
+            def decorator(handler: Callable):
+                self.leave_handlers.append(handler)
+                return handler
+
+            return decorator
 
     def ttl(self, seconds: int) -> BaseScene:
         """Set time-to-live for the scene."""

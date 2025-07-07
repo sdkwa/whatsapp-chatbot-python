@@ -29,33 +29,82 @@ class Composer:
             self.handler = self.compose(*middlewares)
         return self
 
-    def on(self, update_types: Union[str, List[str]], *handlers: Handler) -> Composer:
+    def on(self, update_types: Union[str, List[str]], *handlers: Handler):
         """Listen for specific update types."""
-        return self.use(self.mount(update_types, *handlers))
+        if handlers:
+            # If handlers are provided, add them and return self
+            return self.use(self.mount(update_types, *handlers))
+        else:
+            # If no handlers, return a decorator
+            def decorator(handler: Handler):
+                self.use(self.mount(update_types, handler))
+                return handler
+
+            return decorator
 
     def hears(
         self,
         triggers: Union[str, Pattern, List[Union[str, Pattern]]],
         *handlers: Handler,
-    ) -> Composer:
+    ):
         """Listen for text messages matching patterns."""
-        return self.use(self.hears_middleware(triggers, *handlers))
+        if handlers:
+            return self.use(self.hears_middleware(triggers, *handlers))
+        else:
 
-    def command(self, commands: Union[str, List[str]], *handlers: Handler) -> Composer:
+            def decorator(handler: Handler):
+                self.use(self.hears_middleware(triggers, handler))
+                return handler
+
+            return decorator
+
+    def command(self, commands: Union[str, List[str]], *handlers: Handler):
         """Listen for specific commands."""
-        return self.use(self.command_middleware(commands, *handlers))
+        if handlers:
+            return self.use(self.command_middleware(commands, *handlers))
+        else:
 
-    def action(self, triggers: Union[str, List[str]], *handlers: Handler) -> Composer:
+            def decorator(handler: Handler):
+                self.use(self.command_middleware(commands, handler))
+                return handler
+
+            return decorator
+
+    def action(self, triggers: Union[str, List[str]], *handlers: Handler):
         """Listen for callback query actions."""
-        return self.use(self.action_middleware(triggers, *handlers))
+        if handlers:
+            return self.use(self.action_middleware(triggers, *handlers))
+        else:
 
-    def start(self, *handlers: Handler) -> Composer:
+            def decorator(handler: Handler):
+                self.use(self.action_middleware(triggers, handler))
+                return handler
+
+            return decorator
+
+    def start(self, *handlers: Handler):
         """Listen for /start command."""
-        return self.command("start", *handlers)
+        if handlers:
+            return self.command("start", *handlers)
+        else:
 
-    def help(self, *handlers: Handler) -> Composer:
+            def decorator(handler: Handler):
+                self.command("start", handler)
+                return handler
+
+            return decorator
+
+    def help(self, *handlers: Handler):
         """Listen for /help command."""
-        return self.command("help", *handlers)
+        if handlers:
+            return self.command("help", *handlers)
+        else:
+
+            def decorator(handler: Handler):
+                self.command("help", handler)
+                return handler
+
+            return decorator
 
     def filter(self, predicate: FilterPredicate) -> Composer:
         """Filter updates based on predicate."""
