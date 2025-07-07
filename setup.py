@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Setup script for SDKWA WhatsApp Chatbot."""
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -60,7 +60,7 @@ setup(
         "messaging",
         "api",
         "bot",
-        "automation"
+        "automation",
     ],
     project_urls={
         "Documentation": "https://docs.sdkwa.pro",

@@ -22,17 +22,17 @@ install-dev: ## Install package with development dependencies
 test: ## Run tests
 	pytest
 
-lint: ## Run linting
-	flake8 sdkwa_whatsapp_chatbot tests examples
-	mypy sdkwa_whatsapp_chatbot
-
 format: ## Format code
-	black .
-	isort .
+	python -m black .
+	python -m isort .
 
 format-check: ## Check code formatting
-	black --check .
-	isort --check-only .
+	python -m black --check .
+	python -m isort --check-only .
+
+lint: ## Run linting
+	python -m flake8 sdkwa_whatsapp_chatbot tests examples
+	python -m mypy sdkwa_whatsapp_chatbot
 
 build: clean ## Build package
 	python -m build

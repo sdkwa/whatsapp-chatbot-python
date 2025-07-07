@@ -2,59 +2,69 @@
 """Wizard scene example for step-by-step conversations."""
 
 import os
-from sdkwa_whatsapp_chatbot import WhatsAppBot, session, Stage
+
+from sdkwa_whatsapp_chatbot import Stage, WhatsAppBot, session
 from sdkwa_whatsapp_chatbot.scenes import WizardScene
 
 # Create bot
-bot = WhatsAppBot({
-    'idInstance': os.getenv('ID_INSTANCE', 'your-instance-id'),
-    'apiTokenInstance': os.getenv('API_TOKEN_INSTANCE', 'your-api-token')
-})
+bot = WhatsAppBot(
+    {
+        "idInstance": os.getenv("ID_INSTANCE", "your-instance-id"),
+        "apiTokenInstance": os.getenv("API_TOKEN_INSTANCE", "your-api-token"),
+    }
+)
 
 # Create registration wizard
-registration_wizard = WizardScene('registration')
+registration_wizard = WizardScene("registration")
+
 
 @registration_wizard.step
 async def ask_name(ctx):
     """Step 1: Ask for name."""
-    await ctx.reply("Welcome to the registration wizard! 📝\n\nStep 1/4: What's your name?")
+    await ctx.reply(
+        "Welcome to the registration wizard! 📝\n\nStep 1/4: What's your name?"
+    )
+
 
 @registration_wizard.step
 async def ask_age(ctx):
     """Step 2: Ask for age."""
     name = ctx.message.text
-    await ctx.wizard.next({'name': name})
+    await ctx.wizard.next({"name": name})
     await ctx.reply(f"Nice to meet you, {name}!\n\nStep 2/4: How old are you?")
+
 
 @registration_wizard.step
 async def ask_email(ctx):
     """Step 3: Ask for email."""
     try:
         age = int(ctx.message.text)
-        await ctx.wizard.next({'age': age})
+        await ctx.wizard.next({"age": age})
         await ctx.reply(f"Great!\n\nStep 3/4: What's your email address?")
     except ValueError:
         await ctx.reply("Please enter a valid age (number):")
+
 
 @registration_wizard.step
 async def ask_phone(ctx):
     """Step 4: Ask for phone."""
     email = ctx.message.text
-    if '@' in email:
-        await ctx.wizard.next({'email': email})
+    if "@" in email:
+        await ctx.wizard.next({"email": email})
         await ctx.reply("Perfect!\n\nStep 4/4: What's your phone number?")
     else:
         await ctx.reply("Please enter a valid email address:")
+
 
 @registration_wizard.step
 async def complete_registration(ctx):
     """Step 5: Complete registration."""
     phone = ctx.message.text
-    await ctx.wizard.next({'phone': phone})
-    
+    await ctx.wizard.next({"phone": phone})
+
     # Get all collected data
     all_data = ctx.wizard.get_all_data()
-    
+
     # Create summary
     summary = f"""
 ✅ *Registration Complete!*
@@ -67,17 +77,22 @@ Here's your information:
 
 Thank you for registering! 🎉
     """
-    
+
     await ctx.reply(summary)
     await ctx.wizard.complete()
 
+
 # Create survey wizard
-survey_wizard = WizardScene('survey')
+survey_wizard = WizardScene("survey")
+
 
 @survey_wizard.step
 async def survey_intro(ctx):
     """Survey introduction."""
-    await ctx.reply("📊 Quick Survey\n\nStep 1/3: How would you rate our service? (1-5)")
+    await ctx.reply(
+        "📊 Quick Survey\n\nStep 1/3: How would you rate our service? (1-5)"
+    )
+
 
 @survey_wizard.step
 async def survey_feedback(ctx):
@@ -85,48 +100,55 @@ async def survey_feedback(ctx):
     try:
         rating = int(ctx.message.text)
         if 1 <= rating <= 5:
-            await ctx.wizard.next({'rating': rating})
-            await ctx.reply("Step 2/3: What did you like most? (Optional, send 'skip' to skip)")
+            await ctx.wizard.next({"rating": rating})
+            await ctx.reply(
+                "Step 2/3: What did you like most? (Optional, send 'skip' to skip)"
+            )
         else:
             await ctx.reply("Please enter a rating between 1 and 5:")
     except ValueError:
         await ctx.reply("Please enter a number between 1 and 5:")
 
+
 @survey_wizard.step
 async def survey_suggestions(ctx):
     """Get suggestions."""
-    feedback = ctx.message.text if ctx.message.text.lower() != 'skip' else None
-    await ctx.wizard.next({'feedback': feedback})
-    await ctx.reply("Step 3/3: Any suggestions for improvement? (Optional, send 'skip' to skip)")
+    feedback = ctx.message.text if ctx.message.text.lower() != "skip" else None
+    await ctx.wizard.next({"feedback": feedback})
+    await ctx.reply(
+        "Step 3/3: Any suggestions for improvement? (Optional, send 'skip' to skip)"
+    )
+
 
 @survey_wizard.step
 async def survey_complete(ctx):
     """Complete survey."""
-    suggestions = ctx.message.text if ctx.message.text.lower() != 'skip' else None
-    await ctx.wizard.next({'suggestions': suggestions})
-    
+    suggestions = ctx.message.text if ctx.message.text.lower() != "skip" else None
+    await ctx.wizard.next({"suggestions": suggestions})
+
     # Get all data
     all_data = ctx.wizard.get_all_data()
-    rating = all_data.get(0, {}).get('rating', 0)
-    feedback = all_data.get(1, {}).get('feedback')
-    suggestions = all_data.get(2, {}).get('suggestions')
-    
+    rating = all_data.get(0, {}).get("rating", 0)
+    feedback = all_data.get(1, {}).get("feedback")
+    suggestions = all_data.get(2, {}).get("suggestions")
+
     response = f"""
 📊 *Survey Complete!*
 
 Rating: {'⭐' * rating} ({rating}/5)
 """
-    
+
     if feedback:
         response += f"\nWhat you liked: {feedback}"
-    
+
     if suggestions:
         response += f"\nSuggestions: {suggestions}"
-    
+
     response += "\n\nThank you for your feedback! 🙏"
-    
+
     await ctx.reply(response)
     await ctx.wizard.complete()
+
 
 # Create stage
 stage = Stage([registration_wizard, survey_wizard])
@@ -135,16 +157,19 @@ stage = Stage([registration_wizard, survey_wizard])
 bot.use(session())
 bot.use(stage.middleware())
 
+
 # Commands
-@bot.command('register')
+@bot.command("register")
 async def start_registration(ctx):
     """Start registration wizard."""
-    await ctx.scene_manager.enter('registration', ctx)
+    await ctx.scene_manager.enter("registration", ctx)
 
-@bot.command('survey')
+
+@bot.command("survey")
 async def start_survey(ctx):
     """Start survey wizard."""
-    await ctx.scene_manager.enter('survey', ctx)
+    await ctx.scene_manager.enter("survey", ctx)
+
 
 @bot.start()
 async def start(ctx):
@@ -162,6 +187,7 @@ Available commands:
 Try starting a wizard to see how it guides you through multiple steps!
     """
     await ctx.reply(welcome_text)
+
 
 @bot.help()
 async def help_cmd(ctx):
@@ -190,19 +216,21 @@ This bot demonstrates wizard scenes for step-by-step conversations.
     """
     await ctx.reply(help_text)
 
+
 # Show progress in wizards
-@bot.on('message')
+@bot.on("message")
 async def show_progress(ctx):
     """Show wizard progress."""
-    if hasattr(ctx, 'wizard') and ctx.wizard:
+    if hasattr(ctx, "wizard") and ctx.wizard:
         progress = ctx.wizard.progress
-        current = progress['current_step'] + 1  # Make it 1-indexed for users
-        total = progress['total_steps']
-        
+        current = progress["current_step"] + 1  # Make it 1-indexed for users
+        total = progress["total_steps"]
+
         # Add progress indicator to responses (this is just an example)
         # In a real bot, you might want to add this to specific steps
         pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     print("Starting Wizard Bot...")
     bot.launch()

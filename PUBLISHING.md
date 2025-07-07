@@ -95,24 +95,32 @@ The project uses `bump2version` for version management. Version numbers should f
 
 ## Testing Before Release
 
-1. **Run tests**:
+1. **Format code**:
+   ```bash
+   make format
+   # or
+   python -m black .
+   python -m isort .
+   ```
+
+2. **Run tests**:
    ```bash
    make test
    ```
 
-2. **Check code quality**:
+3. **Check code quality**:
    ```bash
    make lint
    make format-check
    ```
 
-3. **Build and check distribution**:
+4. **Build and check distribution**:
    ```bash
    make build
    make check-dist
    ```
 
-4. **Test install from TestPyPI**:
+5. **Test install from TestPyPI**:
    ```bash
    pip install -i https://test.pypi.org/simple/ sdkwa-whatsapp-chatbot
    ```
