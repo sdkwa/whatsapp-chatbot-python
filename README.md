@@ -2,6 +2,8 @@
 
 [![PyPI version](https://badge.fury.io/py/sdkwa-whatsapp-chatbot.svg)](https://badge.fury.io/py/sdkwa-whatsapp-chatbot)
 [![Python](https://img.shields.io/pypi/pyversions/sdkwa-whatsapp-chatbot.svg)](https://pypi.org/project/sdkwa-whatsapp-chatbot/)
+[![CI](https://github.com/sdkwa/whatsapp-chatbot-python/workflows/CI/badge.svg)](https://github.com/sdkwa/whatsapp-chatbot-python/actions/workflows/ci.yml)
+[![Publish to PyPI](https://github.com/sdkwa/whatsapp-chatbot-python/workflows/Publish%20to%20PyPI/badge.svg)](https://github.com/sdkwa/whatsapp-chatbot-python/actions/workflows/publish.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A Python chatbot library that provides a **Telegraf-like interface** for building WhatsApp bots using the SDKWA WhatsApp API. This library is inspired by the popular Telegraf framework for Telegram bots, bringing the same elegant API design to WhatsApp.
