@@ -31,9 +31,10 @@ setup(
         "Topic :: Communications :: Chat",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.7",
     install_requires=[
-        "sdkwa-whatsapp-api-client>=1.0.0",
+        "sdkwa-whatsapp-api-client>=1.0.3",
+        "requests>=2.25.0",
         "typing-extensions>=4.0.0",
         "pydantic>=2.0.0",
     ],

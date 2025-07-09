@@ -7,7 +7,7 @@ name = "sdkwa-whatsapp-chatbot"
 version = "1.0.1"
 description = "WhatsApp Chatbot library for Python based on SDKWA API with Telegraf-like interface"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.7"
 license = {text = "MIT"}
 authors = [
     {name = "SDKWA Community", email = "support@sdkwa.pro"},
@@ -41,7 +41,8 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
 ]
 dependencies = [
-    "sdkwa-whatsapp-api-client>=1.0.0",
+    "sdkwa-whatsapp-api-client>=1.0.3",
+    "requests>=2.25.0",
     "typing-extensions>=4.0.0",
     "pydantic>=2.0.0",
 ]
