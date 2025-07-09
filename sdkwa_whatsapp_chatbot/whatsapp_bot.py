@@ -92,7 +92,6 @@ class WhatsAppBot(Composer):
             # Add session support
             session_key = ctx.chat_id or "default"
             ctx.session = await self.session_manager.get_session(session_key)
-
             # Process through middleware and handlers
             if self.handler:
                 if asyncio.iscoroutinefunction(self.handler):
@@ -127,8 +126,7 @@ class WhatsAppBot(Composer):
                 if receipt_id:
                     self.api_client.delete_notification(receipt_id)
 
-                return [notification]
-
+                return [notification.get("body", {})] 
             return []
 
         except Exception as e:

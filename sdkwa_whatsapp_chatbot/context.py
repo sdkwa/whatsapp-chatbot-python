@@ -57,7 +57,7 @@ class Context:
     def _parse_update(self) -> None:
         """Parse update data into context properties."""
         # Handle incoming message
-        if "messageData" in self.update:
+        if "messageData" in self.update and self.update.get("typeWebhook") == "incomingMessageReceived":
             message_data = self.update["messageData"]
             sender_data = self.update.get("senderData", {})
 
