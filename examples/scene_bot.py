@@ -8,8 +8,8 @@ from sdkwa_whatsapp_chatbot import BaseScene, Stage, WhatsAppBot, session
 # Create bot
 bot = WhatsAppBot(
     {
-        "idInstance": os.getenv("ID_INSTANCE", "1101000001"),
-        "apiTokenInstance": os.getenv("API_TOKEN_INSTANCE", "bdc849951cd130f830e0a45094fffbf8cc2eaabbf6be97f9"),
+        "idInstance": os.getenv("ID_INSTANCE", "your-instance-id"),
+        "apiTokenInstance": os.getenv("API_TOKEN_INSTANCE", "your-api-token"),
     }
 )
 
