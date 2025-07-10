@@ -8,8 +8,8 @@ from sdkwa_whatsapp_chatbot import BaseScene, Stage, WhatsAppBot, session
 # Create bot
 bot = WhatsAppBot(
     {
-        "idInstance": os.getenv("ID_INSTANCE", "your-instance-id"),
-        "apiTokenInstance": os.getenv("API_TOKEN_INSTANCE", "your-api-token"),
+        "idInstance": os.getenv("ID_INSTANCE", "1101000001"),
+        "apiTokenInstance": os.getenv("API_TOKEN_INSTANCE", "bdc849951cd130f830e0a45094fffbf8cc2eaabbf6be97f9"),
     }
 )
 
@@ -138,8 +138,21 @@ Scenes allow you to create step-by-step conversations!
 @bot.on("message")
 async def global_handler(ctx):
     """Handle messages when not in a scene."""
-    if not hasattr(ctx, "scene") or not ctx.scene:
-        await ctx.reply("Send /start to begin, or /help for available commands.")
+    # Skip if it's a command (commands have their own handlers)
+    if ctx.message and ctx.message.text and ctx.message.text.startswith("/"):
+        return
+    
+    # Check if a scene already handled this message
+    if hasattr(ctx, "_scene_handled") and ctx._scene_handled:
+        return
+    
+    # Check if we're in an active scene
+    if hasattr(ctx, "session") and "__scene" in ctx.session:
+        # We're in a scene, so the scene should handle this message
+        # Don't send the fallback message
+        return
+    # Only handle non-command messages when not in a scene
+    await ctx.reply("Send /start to begin, or /help for available commands.")
 
 
 if __name__ == "__main__":

@@ -27,6 +27,64 @@ class Message:
     caption: Optional[str] = None
     quoted_message_id: Optional[str] = None
     raw_data: Dict[str, Any] = field(default_factory=dict)
+    
+    # Additional fields for different message types
+    location: Optional[Dict[str, Any]] = None
+    contact: Optional[Dict[str, Any]] = None
+    file_data: Optional[Dict[str, Any]] = None
+
+    # Convenience methods for checking message types
+    def is_text(self) -> bool:
+        """Check if message is a text message."""
+        return self.message_type in ["textMessage", "extendedTextMessage"] and bool(self.text)
+    
+    def is_quoted(self) -> bool:
+        """Check if message is a quoted message."""
+        return self.message_type == "quotedMessage"
+    
+    def is_image(self) -> bool:
+        """Check if message is an image."""
+        return self.message_type == "imageMessage"
+    
+    def is_video(self) -> bool:
+        """Check if message is a video."""
+        return self.message_type == "videoMessage"
+    
+    def is_audio(self) -> bool:
+        """Check if message is an audio message."""
+        return self.message_type == "audioMessage"
+    
+    def is_document(self) -> bool:
+        """Check if message is a document."""
+        return self.message_type == "documentMessage"
+    
+    def is_location(self) -> bool:
+        """Check if message is a location."""
+        return self.message_type == "locationMessage"
+    
+    def is_contact(self) -> bool:
+        """Check if message is a contact."""
+        return self.message_type == "contactMessage"
+    
+    def is_media(self) -> bool:
+        """Check if message contains media (image, video, audio, document, or generic file)."""
+        return self.message_type in ["imageMessage", "videoMessage", "audioMessage", "documentMessage", "fileMessage"]
+    
+    def is_file(self) -> bool:
+        """Check if message is a generic file message."""
+        return self.message_type == "fileMessage"
+    
+    def get_latitude(self) -> Optional[float]:
+        """Get latitude from location message."""
+        if self.location:
+            return self.location.get("latitude")
+        return None
+    
+    def get_longitude(self) -> Optional[float]:
+        """Get longitude from location message."""
+        if self.location:
+            return self.location.get("longitude")
+        return None
 
 
 @dataclass
@@ -60,22 +118,68 @@ class Context:
         if "messageData" in self.update and self.update.get("typeWebhook") == "incomingMessageReceived":
             message_data = self.update["messageData"]
             sender_data = self.update.get("senderData", {})
+            message_type = message_data.get("typeMessage", "")
+
+            # Parse text based on message type (following JavaScript example)
+            text = None
+            caption = None
+            
+            # Text messages
+            if message_type == "textMessage":
+                text = message_data.get("textMessageData", {}).get("textMessage")
+            elif message_type == "quotedMessage":
+                text = message_data.get("extendedTextMessageData", {}).get("text")
+            elif message_type == "extendedTextMessage":
+                text = message_data.get("extendedTextMessageData", {}).get("text")
+
+            # Parse file data based on message type
+            file_data = {}
+            file_url = None
+            file_name = None
+            
+            # Media messages (image, video, audio, document)
+            if message_type in ["imageMessage", "audioMessage", "documentMessage", "videoMessage", "fileMessage"]:
+                file_data = message_data.get("fileMessageData", {})
+                file_url = file_data.get("downloadUrl")
+                file_name = file_data.get("fileName")
+                caption = file_data.get("caption")
+                
+                # For media messages, if there's no explicit text, use caption as text
+                if not text and caption:
+                    text = caption
+            
+            # Parse location data
+            location_data = None
+            if message_type == "locationMessage":
+                location_data = message_data.get("locationMessageData", {})
+            
+            # Parse contact data
+            contact_data = None
+            if message_type == "contactMessage":
+                contact_data = message_data.get("contactMessageData", {})
+
+            # Handle quoted message data more robustly
+            quoted_message_id = None
+            quoted_message = message_data.get("quotedMessage")
+            if quoted_message and isinstance(quoted_message, dict):
+                quoted_message_id = quoted_message.get("idMessage")
 
             self.message = Message(
                 message_id=message_data.get("idMessage", ""),
                 chat_id=sender_data.get("chatId", ""),
-                text=message_data.get("textMessageData", {}).get("textMessage"),
+                text=text,
                 timestamp=self.update.get("timestamp"),
                 sender_name=sender_data.get("senderName"),
                 sender_phone=sender_data.get("sender"),
-                message_type=message_data.get("typeMessage"),
-                file_url=message_data.get("fileMessageData", {}).get("downloadUrl"),
-                file_name=message_data.get("fileMessageData", {}).get("fileName"),
-                caption=message_data.get("fileMessageData", {}).get("caption"),
-                quoted_message_id=message_data.get("quotedMessage", {}).get(
-                    "idMessage"
-                ),
+                message_type=message_type,
+                file_url=file_url,
+                file_name=file_name,
+                caption=caption,
+                quoted_message_id=quoted_message_id,
                 raw_data=message_data,
+                location=location_data,
+                contact=contact_data,
+                file_data=file_data if file_data else None,
             )
 
             self.update_type = "message"

@@ -75,7 +75,7 @@ class Stage:
     def middleware(self) -> Callable:
         """Create middleware for scene handling."""
 
-        async def stage_middleware(ctx: Context, next_handler: Callable) -> Any:
+        async def stage_middleware(ctx: Context, next_handler: Optional[Callable] = None) -> Any:
             # Add scene manager to context
             ctx.scene_manager = self
 
@@ -86,35 +86,36 @@ class Stage:
 
                 # Process update through scene handlers
                 if current_scene.handler:
+                    # Mark that a scene is handling this message
+                    ctx._scene_handled = True
+                    
                     if asyncio.iscoroutinefunction(current_scene.handler):
                         scene_result = await current_scene.handler(ctx)
                     else:
                         scene_result = current_scene.handler(ctx)
 
-                    # If scene handled the update, don't continue to global handlers
-                    if scene_result is not False:
-                        return scene_result
+                    # Scene handled the update - don't call next_handler
+                    return scene_result
 
-            # Continue to global handlers
-            if asyncio.iscoroutinefunction(next_handler):
-                return await next_handler()
-            else:
-                return next_handler()
+            # If next_handler is provided and scene didn't handle it, call it
+            if next_handler:
+                if asyncio.iscoroutinefunction(next_handler):
+                    return await next_handler(ctx)
+                else:
+                    return next_handler(ctx)
+
+            # Scene manager middleware doesn't block other handlers
 
         return stage_middleware
 
     def scene_middleware(self, scene_id: str) -> Callable:
         """Create middleware that only activates for a specific scene."""
 
-        async def scene_specific_middleware(
-            ctx: Context, next_handler: Callable
-        ) -> Any:
+        async def scene_specific_middleware(ctx: Context) -> Any:
             current_scene = self.get_current_scene(ctx)
             if current_scene and current_scene.scene_id == scene_id:
-                if asyncio.iscoroutinefunction(next_handler):
-                    return await next_handler()
-                else:
-                    return next_handler()
+                # This middleware only runs for the specific scene
+                pass
 
         return scene_specific_middleware
 

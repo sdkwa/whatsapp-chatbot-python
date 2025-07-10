@@ -95,7 +95,7 @@ class FileSessionStore(SessionStore):
 def session(
     store: Optional[SessionStore] = None,
     key_generator: Optional[Callable[[Context], str]] = None,
-) -> Callable[[Context, Callable], Awaitable[Any]]:
+) -> Callable[[Context], Awaitable[Any]]:
     """
     Create session middleware.
 
@@ -117,7 +117,7 @@ def session(
 
         key_generator = default_key_generator
 
-    async def session_middleware(ctx: Context, next_handler: Callable) -> Any:
+    async def session_middleware(ctx: Context, next_handler: Optional[Callable] = None) -> Any:
         """Session middleware implementation."""
         session_key = key_generator(ctx)
 
@@ -125,16 +125,15 @@ def session(
         session_data = await store.get(session_key) or {}
         ctx.session = session_data
 
-        # Execute next middleware/handler
-        if asyncio.iscoroutinefunction(next_handler):
-            result = await next_handler()
-        else:
-            result = next_handler()
+        # If next_handler is provided, call it (for compatibility with other middleware patterns)
+        if next_handler:
+            if asyncio.iscoroutinefunction(next_handler):
+                return await next_handler(ctx)
+            else:
+                return next_handler(ctx)
 
-        # Save session data
-        await store.set(session_key, ctx.session)
-
-        return result
+        # Note: Session data will be saved by the bot's handle_update method
+        # This is a simple middleware that just adds session to context
 
     return session_middleware
 

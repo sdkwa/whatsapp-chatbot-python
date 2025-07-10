@@ -1,7 +1,7 @@
 """Test basic functionality of the WhatsApp Chatbot library."""
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -129,6 +129,96 @@ class TestSession:
 
         asyncio.run(test_store())
 
+    @pytest.mark.asyncio
+    async def test_session_middleware(self):
+        """Test session middleware functionality."""
+        from sdkwa_whatsapp_chatbot.session import session
+        
+        store = MemorySessionStore()
+        middleware = session(store)
+        
+        # Mock context
+        bot_mock = Mock()
+        api_client_mock = Mock()
+        
+        update = {
+            "typeWebhook": "incomingMessageReceived",
+            "messageData": {
+                "idMessage": "msg123",
+                "typeMessage": "textMessage",
+                "textMessageData": {"textMessage": "Hello"},
+            },
+            "senderData": {"chatId": "1234567890@c.us"},
+        }
+        
+        from sdkwa_whatsapp_chatbot.context import Context
+        ctx = Context(bot_mock, update, api_client_mock)
+        
+        # Apply middleware
+        await middleware(ctx)
+        
+        # Verify session was added to context
+        assert hasattr(ctx, "session")
+        assert isinstance(ctx.session, dict)
+        
+        # Modify session
+        ctx.session["test_key"] = "test_value"
+        
+        # Create another context with same chat_id and apply middleware
+        ctx2 = Context(bot_mock, update, api_client_mock)
+        await middleware(ctx2)
+        
+        # Session should be empty for new context since we haven't saved it yet
+        assert ctx2.session == {}
+
+    @pytest.mark.asyncio
+    async def test_session_with_custom_key_generator(self):
+        """Test session middleware with custom key generator."""
+        from sdkwa_whatsapp_chatbot.session import session
+        
+        store = MemorySessionStore()
+        
+        def custom_key_generator(ctx):
+            return f"custom_{ctx.chat_id}"
+        
+        middleware = session(store, custom_key_generator)
+        
+        # Mock context
+        bot_mock = Mock()
+        api_client_mock = Mock()
+        
+        update = {
+            "typeWebhook": "incomingMessageReceived",
+            "messageData": {
+                "idMessage": "msg123",
+                "typeMessage": "textMessage",
+                "textMessageData": {"textMessage": "Hello"},
+            },
+            "senderData": {"chatId": "1234567890@c.us"},
+        }
+        
+        from sdkwa_whatsapp_chatbot.context import Context
+        ctx = Context(bot_mock, update, api_client_mock)
+        
+        # Apply middleware
+        await middleware(ctx)
+        
+        # Verify session was added
+        assert hasattr(ctx, "session")
+        
+        # Add some data to session
+        ctx.session["user"] = "test_user"
+        
+        # Save session manually to test the key generator
+        await store.set("custom_1234567890@c.us", ctx.session)
+        
+        # Create new context and apply middleware
+        ctx2 = Context(bot_mock, update, api_client_mock)
+        await middleware(ctx2)
+        
+        # Should get the session data we saved
+        assert ctx2.session.get("user") == "test_user"
+
 
 class TestScenes:
     """Test scene functionality."""
@@ -170,6 +260,42 @@ class TestScenes:
         assert "scene1" in stage.scenes
         assert "scene2" in stage.scenes
         assert stage.get_scene("scene1") == scene1
+
+    def test_stage_middleware(self):
+        """Test stage middleware functionality."""
+        from sdkwa_whatsapp_chatbot.scenes import BaseScene, Stage
+        
+        # Create a simple scene
+        test_scene = BaseScene("test_scene")
+        stage = Stage([test_scene])
+        
+        middleware = stage.middleware()
+        
+        # Mock context
+        bot_mock = Mock()
+        api_client_mock = Mock()
+        
+        update = {
+            "typeWebhook": "incomingMessageReceived",
+            "messageData": {
+                "idMessage": "msg123",
+                "typeMessage": "textMessage",
+                "textMessageData": {"textMessage": "Hello"},
+            },
+            "senderData": {"chatId": "1234567890@c.us"},
+        }
+        
+        from sdkwa_whatsapp_chatbot.context import Context
+        ctx = Context(bot_mock, update, api_client_mock)
+        ctx.session = {}
+        
+        # Apply middleware - this should add scene_manager to context
+        import asyncio
+        asyncio.run(middleware(ctx))
+        
+        # Verify scene_manager was added
+        assert hasattr(ctx, "scene_manager")
+        assert ctx.scene_manager == stage
 
 
 class TestMessageTypes:
@@ -677,6 +803,10 @@ class TestIntegration:
             
             bot = WhatsAppBot(config)
             
+            # Add session middleware with bot's store
+            from sdkwa_whatsapp_chatbot.session import session
+            bot.use(session(store=bot.session_manager.store))
+            
             # Add a handler that uses session
             @bot.on("text")
             async def handle_text(ctx):
@@ -1172,3 +1302,144 @@ class TestComprehensive:
                 assert ctx.message.caption == case["expected_caption"]
             if "expected_status" in case:
                 assert ctx.status == case["expected_status"]
+
+
+class TestSceneBotIntegration:
+    """Integration test for scene bot functionality."""
+
+    @pytest.mark.asyncio
+    async def test_scene_bot_middleware_integration(self):
+        """Test that scene bot middleware works correctly."""
+        from sdkwa_whatsapp_chatbot import BaseScene, Stage, WhatsAppBot
+        from sdkwa_whatsapp_chatbot.session import session
+        
+        # Create bot with test config
+        config = {"idInstance": "test_instance", "apiTokenInstance": "test_token"}
+        
+        with patch("sdkwa_whatsapp_chatbot.whatsapp_bot.SDKWA") as mock_sdkwa:
+            # Mock the SDKWA client
+            mock_client = Mock()
+            mock_sdkwa.return_value = mock_client
+            
+            bot = WhatsAppBot(config)
+            
+            # Mock the reply method to avoid API calls
+            with patch("sdkwa_whatsapp_chatbot.context.Context.reply", new_callable=AsyncMock):
+                # Create a test scene
+                greeting_scene = BaseScene("greeting")
+                
+                @greeting_scene.enter()
+                async def greeting_enter(ctx):
+                    ctx.session["scene_entered"] = True
+                    await ctx.reply("Hi! What's your name?")
+                
+                @greeting_scene.on("text")
+                async def greeting_text(ctx):
+                    name = ctx.message.text
+                    ctx.session["user_name"] = name
+                    await ctx.reply(f"Nice to meet you, {name}!")
+                    await ctx.scene.leave_scene(ctx)
+                
+                @greeting_scene.leave()
+                async def greeting_leave(ctx):
+                    ctx.session["scene_left"] = True
+                    await ctx.reply("Thanks for telling me your name!")
+                
+                # Create stage and setup middleware
+                stage = Stage([greeting_scene])
+                bot.use(session(store=bot.session_manager.store))
+                bot.use(stage.middleware())
+                
+                # Add command to enter scene
+                @bot.command("greeting")
+                async def start_greeting(ctx):
+                    await ctx.scene_manager.enter("greeting", ctx)
+                
+                # Test updates
+                command_update = {
+                    "typeWebhook": "incomingMessageReceived",
+                    "messageData": {
+                        "idMessage": "cmd1",
+                        "typeMessage": "textMessage",
+                        "textMessageData": {"textMessage": "/greeting"},
+                    },
+                    "senderData": {"chatId": "1234567890@c.us"},
+                }
+                
+                text_update = {
+                    "typeWebhook": "incomingMessageReceived",
+                    "messageData": {
+                        "idMessage": "msg1",
+                        "typeMessage": "textMessage",
+                        "textMessageData": {"textMessage": "John"},
+                    },
+                    "senderData": {"chatId": "1234567890@c.us"},
+                }
+                
+                # Handle the command to enter scene
+                await bot.handle_update(command_update)
+                
+                # Verify scene was entered
+                session_data = await bot.session_manager.get_session("1234567890@c.us")
+                assert session_data.get("scene_entered") is True
+                assert "__scene" in session_data
+                assert session_data["__scene"]["id"] == "greeting"
+                
+                # Handle text message in scene
+                await bot.handle_update(text_update)
+                
+                # Verify scene processing
+                session_data = await bot.session_manager.get_session("1234567890@c.us")
+                assert session_data.get("user_name") == "John"
+                assert session_data.get("scene_left") is True
+                assert "__scene" not in session_data  # Scene should be left
+
+    @pytest.mark.asyncio
+    async def test_scene_bot_session_persistence(self):
+        """Test that session data persists across multiple updates."""
+        from sdkwa_whatsapp_chatbot import BaseScene, Stage, WhatsAppBot
+        from sdkwa_whatsapp_chatbot.session import session
+        
+        config = {"idInstance": "test_instance", "apiTokenInstance": "test_token"}
+        
+        with patch("sdkwa_whatsapp_chatbot.whatsapp_bot.SDKWA") as mock_sdkwa:
+            mock_client = Mock()
+            mock_sdkwa.return_value = mock_client
+            
+            bot = WhatsAppBot(config)
+            
+            # Setup middleware
+            bot.use(session(store=bot.session_manager.store))
+            
+            # Track session updates
+            session_updates = []
+            
+            @bot.on("text")
+            async def track_session(ctx):
+                counter = ctx.session.get("counter", 0) + 1
+                ctx.session["counter"] = counter
+                session_updates.append(counter)
+            
+            # Create test updates
+            updates = []
+            for i in range(3):
+                updates.append({
+                    "typeWebhook": "incomingMessageReceived",
+                    "messageData": {
+                        "idMessage": f"msg{i}",
+                        "typeMessage": "textMessage",
+                        "textMessageData": {"textMessage": f"Message {i}"},
+                    },
+                    "senderData": {"chatId": "1234567890@c.us"},
+                })
+            
+            # Process updates
+            for update in updates:
+                await bot.handle_update(update)
+            
+            # Verify session persistence
+            assert session_updates == [1, 2, 3]
+            
+            # Verify final session state
+            session_data = await bot.session_manager.get_session("1234567890@c.us")
+            assert session_data["counter"] == 3

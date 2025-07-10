@@ -88,10 +88,7 @@ class WhatsAppBot(Composer):
         try:
             # Create context
             ctx = Context(self, update, self.api_client)
-
-            # Add session support
-            session_key = ctx.chat_id or "default"
-            ctx.session = await self.session_manager.get_session(session_key)
+                
             # Process through middleware and handlers
             if self.handler:
                 if asyncio.iscoroutinefunction(self.handler):
@@ -99,8 +96,10 @@ class WhatsAppBot(Composer):
                 else:
                     self.handler(ctx)
 
-            # Save session
-            await self.session_manager.set_session(session_key, ctx.session)
+            # Save session if middleware provided one and we have a chat_id
+            if hasattr(ctx, 'session') and hasattr(ctx, 'chat_id') and ctx.chat_id:
+                session_key = ctx.chat_id or "default"
+                await self.session_manager.set_session(session_key, ctx.session)
 
         except Exception as e:
             if self.error_handler:
@@ -113,6 +112,11 @@ class WhatsAppBot(Composer):
                     logger.error(f"Error in error handler: {handler_error}")
             else:
                 logger.error(f"Unhandled error: {e}")
+                
+            # Still try to save session even if there was an error
+            if "ctx" in locals() and hasattr(ctx, 'session') and hasattr(ctx, 'chat_id') and ctx.chat_id:
+                session_key = ctx.chat_id or "default"
+                await self.session_manager.set_session(session_key, ctx.session)
 
     async def get_updates(self) -> List[Dict[str, Any]]:
         """Get updates from SDKWA API."""
