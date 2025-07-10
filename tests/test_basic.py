@@ -164,12 +164,16 @@ class TestSession:
         # Modify session
         ctx.session["test_key"] = "test_value"
         
+        # Manually save the session (simulate end of processing)
+        session_key = ctx.chat_id or "default"
+        await store.set(session_key, ctx.session)
+        
         # Create another context with same chat_id and apply middleware
         ctx2 = Context(bot_mock, update, api_client_mock)
         await middleware(ctx2)
         
-        # Session should be empty for new context since we haven't saved it yet
-        assert ctx2.session == {}
+        # Session should have the saved data since it's the same chat_id
+        assert ctx2.session == {"test_key": "test_value"}
 
     @pytest.mark.asyncio
     async def test_session_with_custom_key_generator(self):
@@ -462,10 +466,8 @@ class TestContextAsync:
         bot_mock = Mock()
         api_client_mock = Mock()
         
-        # Mock the async method properly
-        async def mock_send_message(**kwargs):
-            return {"messageId": "response123"}
-        api_client_mock.send_message = mock_send_message
+        # Mock the async method properly using AsyncMock
+        api_client_mock.send_message = AsyncMock(return_value={"messageId": "response123"})
 
         update = {
             "typeWebhook": "incomingMessageReceived",
@@ -490,10 +492,8 @@ class TestContextAsync:
         bot_mock = Mock()
         api_client_mock = Mock()
         
-        # Mock the async method properly
-        async def mock_send_file_by_url(**kwargs):
-            return {"messageId": "photo123"}
-        api_client_mock.send_file_by_url = mock_send_file_by_url
+        # Mock the async method properly using AsyncMock
+        api_client_mock.send_file_by_url = AsyncMock(return_value={"messageId": "photo123"})
 
         update = {
             "typeWebhook": "incomingMessageReceived",
@@ -518,10 +518,8 @@ class TestContextAsync:
         bot_mock = Mock()
         api_client_mock = Mock()
         
-        # Mock the async method properly
-        async def mock_send_location(**kwargs):
-            return {"messageId": "location123"}
-        api_client_mock.send_location = mock_send_location
+        # Mock the async method properly using AsyncMock
+        api_client_mock.send_location = AsyncMock(return_value={"messageId": "location123"})
 
         update = {
             "typeWebhook": "incomingMessageReceived",
@@ -548,10 +546,8 @@ class TestContextAsync:
         bot_mock = Mock()
         api_client_mock = Mock()
         
-        # Mock the async method properly
-        async def mock_send_contact(**kwargs):
-            return {"messageId": "contact123"}
-        api_client_mock.send_contact = mock_send_contact
+        # Mock the async method properly using AsyncMock
+        api_client_mock.send_contact = AsyncMock(return_value={"messageId": "contact123"})
 
         update = {
             "typeWebhook": "incomingMessageReceived",
@@ -581,10 +577,8 @@ class TestContextAsync:
         bot_mock = Mock()
         api_client_mock = Mock()
         
-        # Mock the async method properly
-        async def mock_delete_message(**kwargs):
-            return {"result": True}
-        api_client_mock.delete_message = mock_delete_message
+        # Mock the async method properly using AsyncMock
+        api_client_mock.delete_message = AsyncMock(return_value={"result": True})
 
         update = {
             "typeWebhook": "incomingMessageReceived",
@@ -1168,9 +1162,8 @@ class TestComprehensive:
             mock_client = Mock()
             mock_sdkwa.return_value = mock_client
             
-            async def mock_send_message(**kwargs):
-                return {"messageId": f"response_{kwargs['chat_id']}"}
-            mock_client.send_message = mock_send_message
+            # Use AsyncMock for the async method
+            mock_client.send_message = AsyncMock(side_effect=lambda **kwargs: {"messageId": f"response_{kwargs['chat_id']}"})
             
             bot = WhatsAppBot(config)
             
