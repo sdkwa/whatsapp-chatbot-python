@@ -125,15 +125,20 @@ def session(
         session_data = await store.get(session_key) or {}
         ctx.session = session_data
 
-        # If next_handler is provided, call it (for compatibility with other middleware patterns)
-        if next_handler:
-            if asyncio.iscoroutinefunction(next_handler):
-                return await next_handler(ctx)
-            else:
-                return next_handler(ctx)
-
-        # Note: Session data will be saved by the bot's handle_update method
-        # This is a simple middleware that just adds session to context
+        try:
+            # If next_handler is provided, call it (for compatibility with other middleware patterns)
+            result = None
+            if next_handler:
+                if asyncio.iscoroutinefunction(next_handler):
+                    result = await next_handler(ctx)
+                else:
+                    result = next_handler(ctx)
+            
+            return result
+        finally:
+            # Always save session data back to store after processing
+            if hasattr(ctx, 'session'):
+                await store.set(session_key, ctx.session)
 
     return session_middleware
 

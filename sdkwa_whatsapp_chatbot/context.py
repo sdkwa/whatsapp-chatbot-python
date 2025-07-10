@@ -232,7 +232,7 @@ class Context:
         if not self.chat_id:
             raise ValueError("No chat_id available for reply")
 
-        return await self.api_client.send_message(
+        return self.api_client.send_message(
             chat_id=self.chat_id, message=text, **kwargs
         )
 
@@ -243,7 +243,7 @@ class Context:
         if not self.chat_id:
             raise ValueError("No chat_id available for reply")
 
-        return await self.api_client.send_file_by_url(
+        return self.api_client.send_file_by_url(
             chat_id=self.chat_id,
             url_file=photo_url,
             file_name=kwargs.get("file_name", "photo.jpg"),
@@ -258,7 +258,7 @@ class Context:
         if not self.chat_id:
             raise ValueError("No chat_id available for reply")
 
-        return await self.api_client.send_file_by_url(
+        return self.api_client.send_file_by_url(
             chat_id=self.chat_id,
             url_file=document_url,
             file_name=kwargs.get("file_name", "document"),
@@ -273,7 +273,7 @@ class Context:
         if not self.chat_id:
             raise ValueError("No chat_id available for reply")
 
-        return await self.api_client.send_file_by_url(
+        return self.api_client.send_file_by_url(
             chat_id=self.chat_id,
             url_file=audio_url,
             file_name=kwargs.get("file_name", "audio.mp3"),
@@ -292,7 +292,7 @@ class Context:
         if not self.chat_id:
             raise ValueError("No chat_id available for reply")
 
-        return await self.api_client.send_location(
+        return self.api_client.send_location(
             chat_id=self.chat_id,
             latitude=latitude,
             longitude=longitude,
@@ -318,7 +318,7 @@ class Context:
         if company:
             contact_data["company"] = company
 
-        return await self.api_client.send_contact(
+        return self.api_client.send_contact(
             chat_id=self.chat_id, contact=contact_data
         )
 
@@ -350,7 +350,7 @@ class Context:
         if not msg_id:
             raise ValueError("No message_id available")
 
-        return await self.api_client.delete_message(
+        return self.api_client.delete_message(
             chat_id=self.chat_id, id_message=msg_id
         )
 

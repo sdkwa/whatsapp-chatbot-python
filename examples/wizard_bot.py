@@ -30,7 +30,11 @@ async def ask_name(ctx):
 async def ask_age(ctx):
     """Step 2: Ask for age."""
     name = ctx.message.text
-    await ctx.wizard.next({"name": name})
+    # Save name to step 0 data
+    wizard_state = ctx.wizard.wizard.get_wizard_state(ctx)
+    wizard_state["step_data"][0] = {"name": name}
+    ctx.wizard.wizard.set_state(ctx, {"wizard": wizard_state})
+    
     await ctx.reply(f"Nice to meet you, {name}!\n\nStep 2/4: How old are you?")
 
 
@@ -39,7 +43,11 @@ async def ask_email(ctx):
     """Step 3: Ask for email."""
     try:
         age = int(ctx.message.text)
-        await ctx.wizard.next({"age": age})
+        # Save age to step 1 data
+        wizard_state = ctx.wizard.wizard.get_wizard_state(ctx)
+        wizard_state["step_data"][1] = {"age": age}
+        ctx.wizard.wizard.set_state(ctx, {"wizard": wizard_state})
+        
         await ctx.reply(f"Great!\n\nStep 3/4: What's your email address?")
     except ValueError:
         await ctx.reply("Please enter a valid age (number):")
@@ -50,7 +58,11 @@ async def ask_phone(ctx):
     """Step 4: Ask for phone."""
     email = ctx.message.text
     if "@" in email:
-        await ctx.wizard.next({"email": email})
+        # Save email to step 2 data
+        wizard_state = ctx.wizard.wizard.get_wizard_state(ctx)
+        wizard_state["step_data"][2] = {"email": email}
+        ctx.wizard.wizard.set_state(ctx, {"wizard": wizard_state})
+        
         await ctx.reply("Perfect!\n\nStep 4/4: What's your phone number?")
     else:
         await ctx.reply("Please enter a valid email address:")
@@ -60,7 +72,10 @@ async def ask_phone(ctx):
 async def complete_registration(ctx):
     """Step 5: Complete registration."""
     phone = ctx.message.text
-    await ctx.wizard.next({"phone": phone})
+    # Save phone to step 3 data
+    wizard_state = ctx.wizard.wizard.get_wizard_state(ctx)
+    wizard_state["step_data"][3] = {"phone": phone}
+    ctx.wizard.wizard.set_state(ctx, {"wizard": wizard_state})
 
     # Get all collected data
     all_data = ctx.wizard.get_all_data()
@@ -217,18 +232,7 @@ This bot demonstrates wizard scenes for step-by-step conversations.
     await ctx.reply(help_text)
 
 
-# Show progress in wizards
-@bot.on("message")
-async def show_progress(ctx):
-    """Show wizard progress."""
-    if hasattr(ctx, "wizard") and ctx.wizard:
-        progress = ctx.wizard.progress
-        current = progress["current_step"] + 1  # Make it 1-indexed for users
-        total = progress["total_steps"]
-
-        # Add progress indicator to responses (this is just an example)
-        # In a real bot, you might want to add this to specific steps
-        pass
+# Show progress in wizards (removed the general message handler that was causing duplication)
 
 
 if __name__ == "__main__":

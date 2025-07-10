@@ -17,6 +17,9 @@ class WizardScene(BaseScene):
         super().__init__(scene_id)
         self.steps: List[Callable] = []
         self.current_step = 0
+        
+        # Add default message handler for wizard flow
+        self.on("message", self._handle_wizard_message)
 
     def step(self, handler: Callable = None):
         """Add a step to the wizard."""
@@ -48,6 +51,31 @@ class WizardScene(BaseScene):
 
         # Execute first step
         await self.execute_current_step(ctx)
+
+    async def _handle_wizard_message(self, ctx: Context) -> None:
+        """Handle incoming messages in wizard flow."""
+        # Skip commands - they should be handled by the main bot
+        if hasattr(ctx.message, 'text') and ctx.message.text and ctx.message.text.startswith('/'):
+            return
+            
+        wizard_state = self.get_wizard_state(ctx)
+        current_step_index = wizard_state.get("current_step", 0)
+        
+        # Advance to the next step and execute it
+        # This is because user input is a response to the current step
+        next_step_index = current_step_index + 1
+        
+        if next_step_index < len(self.steps):
+            # Advance to next step
+            wizard_state["current_step"] = next_step_index
+            
+            # Update state
+            scene_state = self.get_state(ctx)
+            scene_state["wizard"] = wizard_state
+            self.set_state(ctx, scene_state)
+            
+            # Execute the next step
+            await self.execute_current_step(ctx)
 
     async def execute_current_step(self, ctx: Context) -> None:
         """Execute the current step."""
